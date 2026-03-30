@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>検索 - テストアプリ</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        h1 { text-align: center; margin-bottom: 24px; font-size: 24px; }
+        form { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; }
+        input[type="text"] { flex: 1; max-width: 400px; padding: 12px 16px; font-size: 16px; border: 1px solid var(--border-color); border-radius: 8px; outline: none; }
+        button { background-color: var(--primary-color); color: white; padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border-color); color: var(--text-muted); }
+        td { padding: 12px; border-bottom: 1px solid var(--border-color); }
+        tr:hover { background-color: #f9fafb; }
+        .back-link { display: inline-block; margin-top: 20px; color: var(--primary-color); text-decoration: none; font-weight: 500; }
+        .version-badge { position: absolute; top: 10px; right: 20px; font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+        /* スマホ向け：テーブルをカードレイアウトに変更 */
+        @media (max-width: 600px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; } /* ヘッダーを隠す */
+            tr {
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                margin-bottom: 16px;
+                padding: 16px;
+                background-color: var(--card-bg);
+            }
+            td {
+                padding: 4px 0;
+                border: none;
+                width: 100% !important;
+                display: flex;
+            }
+            td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                width: 80px;
+                min-width: 80px;
+                color: var(--text-muted);
+            }
+            td:last-child { /* 操作ボタンのセル */
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px solid var(--border-color);
+            }
+            td:last-child::before {
+                content: "操作";
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="version-badge">Mark-2</div>
+    <div class="container">
+        <h1>名前検索</h1>
+
+        <form method="GET">
+            <input type="text" name="q" placeholder="キーワードを入力..." value="{{ q }}">
+            <button type="submit">検索</button>
+        </form>
+
+        {% if error_message %}
+            <div style="color: #dc2626; background: #fee2e2; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+                エラーが発生しました: {{ error_message }}
+            </div>
+        {% endif %}
+
+        {% if q %}
+            <h2 style="font-size: 18px; margin-bottom: 10px;">「{{ q }}」の検索結果</h2>
+            {% if results %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th style="width: 80px;">イメージ</th>
+                            <th>名前</th>
+                            <th>メモ</th>
+                            <th style="width: 100px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in results %}
+                            <tr>
+                                <td data-label="No">{{ loop.index }}</td>
+                                <td data-label="イメージ">
+                                    {% if item.image_filename %}
+                                        <img src="{{ url_for('static', filename='uploads/' + item.image_filename) }}" alt="image" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                                    {% else %}
+                                        <div style="width: 60px; height: 60px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #aaa;">No Image</div>
+                                    {% endif %}
+                                </td>
+                                <td data-label="名前" style="font-weight: 500;">{{ item.name }}</td>
+                                <td data-label="メモ" style="color: var(--text-muted);">{{ item.memo }}</td>
+                                <td>
+                                    <div style="display: flex; gap: 12px;">
+                                        <a href="{{ url_for('edit_item', no=item.no) }}" style="color: var(--primary-color); text-decoration: none; font-size: 14px; font-weight: 500;">編集</a>
+                                        <form action="{{ url_for('delete_item', no=item.no) }}" method="POST" style="display: inline;" onsubmit="return confirm('本当に削除しますか？');">
+                                            <button type="submit" style="background: none; border: none; color: #dc2626; padding: 0; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;">削除</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; margin-top: 20px;">
+                    該当するデータが見つかりませんでした。
+                </p>
+            {% endif %}
+        {% endif %}
+
+        <a href="{{ url_for('index') }}" class="back-link">← メニューへ戻る</a>
+    </div>
+</body>
+</html>

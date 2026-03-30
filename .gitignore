@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ユーザーがアップロードした画像はGit管理から除外
+static/uploads/*
+!static/uploads/.gitkeep
+
+# 環境変数（パスワード等を含む可能性があるため）
+.env
+
+# OS固有のファイル
+.DS_Store
+Thumbs.db

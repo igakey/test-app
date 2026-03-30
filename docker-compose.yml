@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    image: test-app:${APP_VERSION:-latest}
+    container_name: test-app-web
+    ports:
+      - "7000:7000"
+    environment:
+      - PORT=7000
+      - DATABASE_URL=postgresql://postgres:igaki@192.168.1.7:5432/igaki?client_encoding=utf8
+    extra_hosts:
+      - "host.docker.internal:192.168.1.7"
