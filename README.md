@@ -29,7 +29,13 @@ CREATE TABLE IF NOT EXISTS sample (
 ```
 
 ### 2. アプリの起動
-プロジェクトのルートディレクトリで以下のコマンドを実行します。
+プロジェクトのルートディレクトリに `.env` ファイルを作成し、データベース接続情報を記述してください。
+
+```text
+DATABASE_URL=postgresql://ユーザー名:パスワード@ホスト:ポート/DB名?client_encoding=utf8
+```
+
+その後、以下のコマンドを実行します。
 
 ```bash
 docker compose up --build
