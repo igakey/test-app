@@ -97,7 +97,7 @@ def search():
     if query_param:
         try:
             # 名前またはメモのいずれかにキーワードが含まれるものを検索（強化版）
-            stmt = db.select(Item).filter(
+            stmt = db.select(Item).where(
                 or_(
                     Item.name.ilike(f'%{query_param}%'),
                     Item.memo.ilike(f'%{query_param}%')
