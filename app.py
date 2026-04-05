@@ -7,29 +7,45 @@ from sqlalchemy import or_
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
-# .envファイルがある場合、環境変数を読み込む
-load_dotenv()
-
 app = Flask(__name__)
+
+# .envファイルを絶対パスで確実に読み込み、中身をUTF-8として処理する
+env_path = Path(__file__).resolve().parent / '.env'
+if env_path.exists():
+    with open(env_path, encoding='utf-8') as f:
+        load_dotenv(stream=f)
+else:
+    # ファイルが存在しない場合はシステム環境変数を参照
+    pass
 
 # 画像の保存先設定
 UPLOAD_FOLDER = Path('static/uploads')
 app.config['UPLOAD_FOLDER'] = str(UPLOAD_FOLDER)
 
-# アップロードを許可する拡張子の定義
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# 環境変数 DATABASE_URL があればそれを使用し、なければローカルの 127.0.0.1 を使用します
-raw_db_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:igaki@127.0.0.1:5432/igaki').strip()
+# 環境変数 DATABASE_URL の取得とクレンジング
+raw_db_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:igaki@host.docker.internal:5432/igaki').strip()
+# 引用符が含まれている場合の除去
+raw_db_url = raw_db_url.strip("'").strip('"')
 
-# URLに client_encoding が明示されていない場合のみ、デフォルトの utf8 を追加
-if 'client_encoding' not in raw_db_url and 'postgresql' in raw_db_url:
+# 1. client_encoding の強制設定
+# Python側がUTF-8であるため、DB側がSJISでも client_encoding=utf8 を指定すればPostgreSQLが自動変換します。
+if 'client_encoding' in raw_db_url:
+    # 既存の指定がある場合はそのまま
+    pass
+else:
     separator = '&' if '?' in raw_db_url else '?'
     raw_db_url = f"{raw_db_url}{separator}client_encoding=utf8"
+
+# 2. エラーメッセージの文字化けによるクラッシュを防ぐため lc_messages=C (英語) を強制
+if 'options=' not in raw_db_url and 'postgresql' in raw_db_url:
+    separator = '&' if '?' in raw_db_url else '?'
+    raw_db_url = f"{raw_db_url}{separator}options=-c%20lc_messages=C"
 
 app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -38,10 +54,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 app.config['SQLALCHEMY_ECHO'] = True  # 発行されるSQLクエリをコンソールに表示します
 
-# アクセスログのレベルを調整（デバッグを容易にするため）
 logging.basicConfig(level=logging.INFO)
-
-# 起動時に接続先を表示（デバッグ用）
 masked_url = app.config['SQLALCHEMY_DATABASE_URI'].split('@')[-1] if '@' in app.config['SQLALCHEMY_DATABASE_URI'] else app.config['SQLALCHEMY_DATABASE_URI']
 app.logger.info(f"Connecting to database at: {masked_url}")
 
