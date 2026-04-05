@@ -26,11 +26,12 @@ def allowed_file(filename):
 # 環境変数 DATABASE_URL があればそれを使用し、なければローカルの 127.0.0.1 を使用します
 raw_db_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:igaki@127.0.0.1:5432/igaki').strip()
 
-# client_encodingの二重指定を防ぐための簡易的な正規化
+# client_encoding が指定されていない場合のみ、デフォルトとして utf8 を付与する
 if 'client_encoding' not in raw_db_url and 'postgresql' in raw_db_url:
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"{raw_db_url}?client_encoding=utf8" if '?' not in raw_db_url else f"{raw_db_url}&client_encoding=utf8"
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
+    separator = '&' if '?' in raw_db_url else '?'
+    raw_db_url = f"{raw_db_url}{separator}client_encoding=utf8"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True  # 発行されるSQLクエリをコンソールに表示します
