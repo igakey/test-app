@@ -5,6 +5,10 @@ from flask import Flask, render_template, request, redirect, url_for, abort
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+
+# .envファイルがある場合、環境変数を読み込む
+load_dotenv()
 
 app = Flask(__name__)
 

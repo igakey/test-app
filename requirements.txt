@@ -1,5 +1,5 @@
-flask
-flask-sqlalchemy
+Flask
+Flask-SQLAlchemy
 psycopg2-binary
-requests
-beautifulsoup4
+python-dotenv
+SQLAlchemy
